@@ -1,5 +1,6 @@
 .vscode
 maelstrom
 maelstrom-broadcast/maelstrom-broadcast
+maelstrom-counter/maelstrom-counter
 maelstrom-echo/maelstrom-echo
 maelstrom-unique-ids/maelstrom-unique-ids
