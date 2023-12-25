@@ -3,4 +3,5 @@ maelstrom
 maelstrom-broadcast/maelstrom-broadcast
 maelstrom-counter/maelstrom-counter
 maelstrom-echo/maelstrom-echo
+maelstrom-kafka/maelstrom-kafka
 maelstrom-unique-ids/maelstrom-unique-ids

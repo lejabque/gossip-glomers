@@ -4,5 +4,6 @@ use (
 	./maelstrom-broadcast
 	./maelstrom-counter
 	./maelstrom-echo
+	./maelstrom-kafka
 	./maelstrom-unique-ids
 )
