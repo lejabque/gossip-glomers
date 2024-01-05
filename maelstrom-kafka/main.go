@@ -11,8 +11,7 @@ func main() {
 	logger := log.Default()
 
 	n := maelstrom.NewNode()
-	var stg TopicStorage
-
+	stg := NewTopicStorage(maelstrom.NewLinKV(n))
 	n.Handle("send", func(msg maelstrom.Message) error {
 		var body map[string]any
 		if err := json.Unmarshal(msg.Body, &body); err != nil {
@@ -20,7 +19,10 @@ func main() {
 		}
 		key := body["key"].(string)
 		value := int(body["msg"].(float64))
-		offset := stg.Append(key, value)
+		offset, err := stg.Append(key, value)
+		if err != nil {
+			return err
+		}
 
 		resp := map[string]any{"type": "send_ok", "offset": offset}
 		return n.Reply(msg, resp)
@@ -34,7 +36,13 @@ func main() {
 		offsets := body["offsets"].(map[string]interface{})
 		msgs := make(map[string][][2]int)
 		for key, offset := range offsets {
-			poll := stg.Poll(key, int(offset.(float64)))
+			poll, err := stg.Poll(key, int(offset.(float64)))
+			if maelstrom.ErrorCode(err) == maelstrom.KeyDoesNotExist {
+				continue
+			}
+			if err != nil {
+				return err
+			}
 			conv := make([][2]int, len(poll))
 			for i, entry := range poll {
 				conv[i] = [2]int{entry.offset, entry.value}
@@ -53,7 +61,10 @@ func main() {
 		}
 		offsets := body["offsets"].(map[string]interface{})
 		for key, offset := range offsets {
-			stg.Commit(key, int(offset.(float64)))
+			err := stg.Commit(key, int(offset.(float64)))
+			if err != nil {
+				return err
+			}
 		}
 
 		resp := map[string]any{"type": "commit_offsets_ok"}
@@ -69,7 +80,14 @@ func main() {
 		offsets := make(map[string]int)
 		for _, k := range keys {
 			key := k.(string)
-			offsets[key] = stg.GetCommitedOffset(key)
+			offset, err := stg.GetCommitedOffset(key)
+			if maelstrom.ErrorCode(err) == maelstrom.KeyDoesNotExist {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			offsets[key] = offset
 		}
 
 		resp := map[string]any{"type": "list_committed_offsets_ok", "offsets": offsets}
